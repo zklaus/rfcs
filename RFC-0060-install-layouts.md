@@ -98,12 +98,13 @@ together, with the resolution rule stated beside them.
    describe, its own layout.
 9. A "Where things end up" paragraph in `CONTRIBUTING.md`.
 
-Landing order: 2 and 3 are in flight; 5 follows so the editable layout is
-exercised on every PR; 1, 4 and 6 once the inventory is at zero; 7 to 9 as
-soon as the helpers are the answer they document. Items 1 and 2 require the
-`build-system.requires` floor at scikit-build-core 1.1.1, which carries the
-install-first `__path__` order and the loader's `paths` attribute
-(scikit-build/scikit-build-core#1566, #1567).
+Landing order: 2 landed with pytorch/pytorch#195587, the rest of 3 is in
+flight (pytorch/pytorch#195889, #195890, #195891); 5 follows so the editable
+layout is exercised on every PR; 1, 4 and 6 once the inventory is at zero; 7
+to 9 as soon as the helpers are the answer they document. Items 1 and 2 need
+the `build-system.requires` floor at scikit-build-core 1.1.1, in place since
+pytorch/pytorch#200913, which carries the install-first `__path__` order and
+the loader's `paths` attribute (scikit-build/scikit-build-core#1566, #1567).
 
 ### The three layouts
 
@@ -303,6 +304,34 @@ have their own reviewers, so they follow as PRs that cite the page. The
 evidence, the zip-versus-recipe diff and the five in-tree callers of the
 script, is in the inventory asset.
 
+### The build backend
+
+The rules above lean on scikit-build-core 1.1.1, so the RFC states how that
+dependency is kept current.
+
+* **Floor, not pin.** `build-system.requires` and `requirements-build.txt`
+  declare `scikit-build-core>=1.1.1`; an isolated build takes the current
+  release. CI pins the exact version it tests, in
+  `.ci/docker/requirements-ci.txt`, and builds with `--no-build-isolation`
+  against that pin.
+* **Cadence.** The CI pin follows each scikit-build-core release: a PR bumps
+  the pin and runs the full build matrix. The floor moves only when PyTorch
+  depends on a fix that ships in a release, as for 1.1.1
+  (pytorch/pytorch#200913). 1.1.2 (2026-11-02) is the next case: it ships
+  the `{build_dir}` key for `editable.rebuild-dir` that PyTorch asked for
+  (scikit-build/scikit-build-core#1606), so the pin moves now and the floor
+  moves when `rebuild-dir` adopts the key.
+* **Maintenance.** The integration (the `[tool.scikit-build]`
+  configuration, `cmake/EnvVarForwarding.cmake`, the CI pin) is maintained
+  by the project like any other part of the build system; asks that need a
+  change in scikit-build-core go upstream (scikit-build/scikit-build-core#1566,
+  #1567 and #1606 were filed that way).
+* **Automatic updates.** The pin bump can be a scheduled job in the style of
+  the triton and xla hash-update PRs, opened when a release appears. The
+  editable-install job (item 5) is what makes a green run on that PR
+  meaningful, since the pin is what editable installs in CI use. The floor
+  is never bumped automatically.
+
 
 ## **Metrics**
 
@@ -396,19 +425,18 @@ location rule with a supported anchor rather than numpy's warning.
 
 
 ## Resolution
-(to be filled in)
 
-### Level of Support
-(to be filled in)
-
-#### Additional Context
-(to be filled in)
+Open. The decision and its level of support are recorded here when the RFC
+is accepted or rejected.
 
 ### Next Steps
-(to be filled in)
+
+In the landing order given under Changes: the editable-install job (item 5)
+goes up as a PR now; items 1, 4 and 6 follow once the `__file__` inventory is
+at zero; the page and its links (7 to 9) once the helpers are the answer they
+document. The standalone build defaults follow as separate PRs that cite the
+page (Split out).
 
 #### Tracking issue
-(to be filled in)
 
-#### Exceptions
-(to be filled in)
+<pytorch/pytorch tracking issue, filed with the CI PR>
